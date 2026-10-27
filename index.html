@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유아용 멸종위기 동물 구조 퀴즈</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Canvas Confetti CDN for Celebration Effects -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" crossorigin="anonymous"></script>
+    <!-- Google Fonts: Jua for cute children's font -->
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Jua', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            min-height: 100vh;
+            overscroll-behavior: none;
+            touch-action: manipulation;
+        }
+        .animal-card:hover {
+            transform: scale(1.03);
+        }
+        .bounce-animation {
+            animation: bounce 1s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(0); }
+        }
+        .stanbym-container {
+            max-width: 100vw;
+            min-height: 94vh;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-2 sm:p-4 bg-sky-100">
+
+    <!-- App Container optimized for LG StanbyME & Touch -->
+    <div id="app" class="stanbym-container w-full max-w-5xl bg-white shadow-2xl rounded-3xl p-6 md:p-10 text-center relative overflow-hidden flex flex-col justify-between">
+        
+        <div>
+            <!-- Top Toolbar (Sound & Stickers Button) -->
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <button onclick="toggleAudio()" id="sound-toggle-btn" class="bg-sky-100 hover:bg-sky-200 text-sky-700 px-5 py-3 rounded-2xl text-base md:text-lg font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                    🔊 음성 및 효과음 켜짐
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="openStickerBook()" class="bg-amber-100 hover:bg-amber-200 text-amber-700 px-5 py-3 rounded-2xl text-base md:text-lg font-bold transition flex items-center gap-2 shadow-sm cursor-pointer">
+                        ⭐ 내 동물 스티커 (<span id="sticker-count">0</span>/20)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Header Section -->
+            <div id="header-section" class="mb-6">
+                <span class="bg-sky-100 text-sky-600 px-5 py-2 rounded-full text-base md:text-lg font-semibold shadow-sm inline-block mb-2">🐢 멸종위기 동물 구조대 🐬</span>
+                <h1 id="main-title" class="text-3xl md:text-5xl font-bold text-gray-800 tracking-wide">어떤 서식지로 출발할까요?</h1>
+                <p id="sub-title" class="text-gray-500 text-lg md:text-xl mt-2">탐험하고 싶은 서식지를 골라주세요!</p>
+            </div>
+
+            <!-- Habitat Selection Screen -->
+            <div id="habitat-screen" class="grid grid-cols-1 sm:grid-cols-2 gap-6 my-6">
+                <button onclick="startHabitat('sea')" class="habitat-btn bg-gradient-to-br from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white p-8 rounded-3xl shadow-lg transform transition hover:scale-105 flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    <span class="text-7xl">🌊</span>
+                    <span class="text-3xl font-bold">바다 서식지</span>
+                    <span class="text-base bg-white/20 px-4 py-1.5 rounded-full">바키타 돌고래, 듀공, 크릴 외</span>
+                </button>
+                <button onclick="startHabitat('river')" class="habitat-btn bg-gradient-to-br from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 text-white p-8 rounded-3xl shadow-lg transform transition hover:scale-105 flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    <span class="text-7xl">💧</span>
+                    <span class="text-3xl font-bold">강과 습지 서식지</span>
+                    <span class="text-base bg-white/20 px-4 py-1.5 rounded-full">투구새우, 두루미, 아홀로틀 외</span>
+                </button>
+                <button onclick="startHabitat('forest')" class="habitat-btn bg-gradient-to-br from-green-400 to-emerald-600 hover:from-green-500 hover:to-emerald-700 text-white p-8 rounded-3xl shadow-lg transform transition hover:scale-105 flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    <span class="text-7xl">🌳</span>
+                    <span class="text-3xl font-bold">숲 서식지</span>
+                    <span class="text-base bg-white/20 px-4 py-1.5 rounded-full">벵골호랑이, 아무르표범, 레서판다 외</span>
+                </button>
+                <button onclick="startHabitat('desert')" class="habitat-btn bg-gradient-to-br from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white p-8 rounded-3xl shadow-lg transform transition hover:scale-105 flex flex-col items-center justify-center gap-3 cursor-pointer">
+                    <span class="text-7xl">🏜️</span>
+                    <span class="text-3xl font-bold">사막 서식지</span>
+                    <span class="text-base bg-white/20 px-4 py-1.5 rounded-full">쌍봉낙타, 사막여우, 치타 외</span>
+                </button>
+            </div>
+
+            <!-- Quiz Screen (Hidden by default) -->
+            <div id="quiz-screen" class="hidden">
+                <!-- Progress & Habitat Badge -->
+                <div class="flex justify-between items-center mb-6">
+                    <button onclick="goToHome()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-3 rounded-2xl text-base font-bold transition flex items-center gap-2 cursor-pointer shadow-sm">
+                        🏠 처음으로
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <div id="quiz-progress" class="bg-sky-50 text-sky-600 px-5 py-2 rounded-full font-bold text-xl shadow-sm">
+                            문제 1 / 5
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Box -->
+                <div id="question-box" class="bg-sky-50/70 border-2 border-sky-200 rounded-3xl p-6 mb-6 text-left shadow-inner relative">
+                    <div class="flex justify-between items-start gap-4 mb-3">
+                        <p id="question-text" class="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed">
+                            <!-- Dynamic Question Text -->
+                        </p>
+                        <!-- TTS Read Aloud Button -->
+                        <button onclick="readCurrentQuestion()" id="tts-btn" class="bg-sky-500 hover:bg-sky-600 text-white px-4 py-3 rounded-2xl text-base md:text-lg font-bold transition shadow-md flex items-center gap-2 shrink-0 cursor-pointer animate-pulse">
+                            🗣️ 문제 읽어주기
+                        </button>
+                    </div>
+                    
+                    <!-- Hint Toggle Section -->
+                    <div class="mt-4">
+                        <button onclick="toggleHint()" id="hint-toggle-btn" class="bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-2xl text-base font-bold transition inline-flex items-center gap-2 shadow-sm cursor-pointer">
+                            💡 힌트 보기
+                        </button>
+                        <div id="hint-container" class="hidden mt-3 text-sky-700 font-semibold text-lg md:text-xl bg-white/90 p-4 rounded-2xl shadow-sm border border-sky-100">
+                            <span>💡 힌트: </span><span id="hint-text"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animal Choices Grid (5 choices) -->
+                <div id="choices-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 mb-4">
+                    <!-- Dynamic Choice Cards -->
+                </div>
+
+                <!-- Feedback Message Box (For Wrong Answers) -->
+                <div id="feedback-box" class="hidden mt-4 p-4 rounded-2xl text-2xl font-bold transition-all">
+                    <!-- Wrong answer message appears here -->
+                </div>
+            </div>
+
+            <!-- Success & Next Step Screen -->
+            <div id="success-screen" class="hidden py-4 flex flex-col items-center justify-center">
+                <div class="text-8xl mb-3 bounce-animation">🎉</div>
+                <h2 id="success-heading" class="text-2xl md:text-4xl font-bold text-emerald-700 mb-4 px-2">정답이에요! 구조대 [동물 이름] 구조하러 출발하세요!</h2>
+                <div id="success-animal-box" class="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-6 my-2 w-full max-w-2xl text-center shadow-inner flex flex-col items-center">
+                    <div id="success-img-container" class="w-28 h-28 mb-3 rounded-2xl overflow-hidden shadow-md bg-white flex items-center justify-center text-5xl md:text-6xl p-2 shrink-0">
+                        <!-- Dynamic Success Animal Graphic -->
+                    </div>
+                    <h3 id="success-animal-name" class="text-2xl font-bold text-gray-800 mb-2"></h3>
+                    <p id="success-fact" class="text-gray-600 text-lg md:text-xl leading-relaxed"></p>
+                </div>
+                <button onclick="proceedToNextQuestion()" class="mt-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-12 py-4 rounded-2xl text-2xl shadow-lg transition transform hover:scale-105 flex items-center gap-3 cursor-pointer">
+                    다음으로 ➡️
+                </button>
+            </div>
+
+            <!-- Completion Screen -->
+            <div id="completion-screen" class="hidden py-10 flex flex-col items-center justify-center">
+                <div class="text-8xl mb-4 bounce-animation">🎉</div>
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-800 mb-3">구조 작전 성공!</h2>
+                <p class="text-gray-600 text-xl mb-8">모든 동물 친구들을 안전하게 지켜냈어요! 스티커를 획득했습니다.</p>
+                <div class="flex flex-wrap gap-4 justify-center">
+                    <button onclick="goToHome()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-8 py-4 rounded-2xl text-2xl shadow-lg transition transform hover:scale-105 cursor-pointer">
+                        다른 서식지 탐험하기 🗺️
+                    </button>
+                    <button onclick="openStickerBook()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-4 rounded-2xl text-2xl shadow-lg transition transform hover:scale-105 cursor-pointer">
+                        스티커 도감 보기 ⭐
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Branding for StanbyME -->
+        <div class="mt-4 pt-3 border-t text-gray-400 text-sm">
+            LG 스탠바이미 맞춤형 멸종위기 동물 구조 퀴즈 🐾
+        </div>
+
+        <!-- Sticker Book Modal -->
+        <div id="sticker-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-3xl rounded-3xl p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h3 class="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">⭐ 동물 친구 스티커 도감</h3>
+                    <button onclick="closeStickerBook()" class="text-gray-400 hover:text-gray-600 text-3xl font-bold px-3">&times;</button>
+                </div>
+                <div id="sticker-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto p-2 flex-grow">
+                    <!-- Dynamic stickers rendered here -->
+                </div>
+                <div class="mt-4 pt-3 border-t text-center">
+                    <button onclick="closeStickerBook()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold px-8 py-3 rounded-2xl text-xl shadow cursor-pointer">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'pop') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'success') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.type = 'triangle';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        noteGain.gain.setValueAtTime(0.4, now + idx * 0.12);
+                        noteGain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+                        noteOsc.start(now + idx * 0.12);
+                        noteOsc.stop(now + idx * 0.12 + 0.3);
+                    });
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(130, now + 0.25);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio play error:", e);
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-toggle-btn');
+            if (soundEnabled) {
+                btn.innerHTML = "🔊 음성 및 효과음 켜짐";
+                btn.className = "bg-sky-100 hover:bg-sky-200 text-sky-700 px-5 py-3 rounded-2xl text-base md:text-lg font-bold transition flex items-center gap-2 shadow-sm cursor-pointer";
+                playSound('click');
+            } else {
+                btn.innerHTML = "🔇 음성 및 효과음 꺼짐";
+                btn.className = "bg-gray-100 hover:bg-gray-200 text-gray-700 px-5 py-3 rounded-2xl text-base md:text-lg font-bold transition flex items-center gap-2 shadow-sm cursor-pointer";
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+            }
+        }
+
+        // Web Speech API for Reading Aloud Questions
+        function readCurrentQuestion() {
+            if (!soundEnabled) return;
+            if (!('speechSynthesis' in window)) {
+                alert("이 브라우저는 음성 읽기를 지원하지 않아요.");
+                return;
+            }
+
+            const habitat = quizData[currentHabitatKey];
+            const qData = habitat.questions[currentQuestionIndex];
+            const textToRead = qData.q;
+
+            window.speechSynthesis.cancel(); // Stop previous speech
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.9; // Slightly slower for toddlers
+            utterance.pitch = 1.1; // Cute cheerful pitch
+
+            const ttsBtn = document.getElementById('tts-btn');
+            ttsBtn.innerText = "🗣️ 읽어주는 중...";
+            ttsBtn.classList.remove('animate-pulse');
+
+            utterance.onend = () => {
+                ttsBtn.innerText = "🗣️ 문제 읽어주기";
+                ttsBtn.classList.add('animate-pulse');
+            };
+
+            utterance.onerror = () => {
+                ttsBtn.innerText = "🗣️ 문제 읽어주기";
+                ttsBtn.classList.add('animate-pulse');
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        let hintVisible = false;
+
+        function toggleHint() {
+            playSound('click');
+            hintVisible = !hintVisible;
+            const container = document.getElementById('hint-container');
+            const btn = document.getElementById('hint-toggle-btn');
+            if (hintVisible) {
+                container.classList.remove('hidden');
+                btn.innerText = "💡 힌트 숨기기";
+                btn.className = "bg-amber-200 hover:bg-amber-300 text-amber-900 px-4 py-2 rounded-2xl text-base font-bold transition inline-flex items-center gap-2 shadow-sm cursor-pointer";
+                
+                // Also read hint aloud if sound is enabled
+                if (soundEnabled && 'speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const hintText = document.getElementById('hint-text').innerText;
+                    const utterance = new SpeechSynthesisUtterance("힌트. " + hintText);
+                    utterance.lang = 'ko-KR';
+                    utterance.rate = 0.9;
+                    window.speechSynthesis.speak(utterance);
+                }
+            } else {
+                container.classList.add('hidden');
+                btn.innerText = "💡 힌트 보기";
+                btn.className = "bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-2xl text-base font-bold transition inline-flex items-center gap-2 shadow-sm cursor-pointer";
+            }
+        }
+
+        // Quiz Data Definition
+        const quizData = {
+            sea: {
+                name: "바다 서식지",
+                icon: "🌊",
+                choices: [
+                    { name: "바키타 돌고래", emoji: "🐬", bg: "bg-cyan-100 text-cyan-600", fact: "바키타 돌고래는 세상에서 가장 작은 돌고래예요. 웃는 얼굴을 가지고 있답니다!" },
+                    { name: "듀공", emoji: "🦭", bg: "bg-blue-100 text-blue-600", fact: "듀공은 따뜻한 바다에서 해초를 우유처럼 부드럽게 뜯어 먹는 온순한 바다의 요정이에요." },
+                    { name: "크릴", emoji: "🦐", bg: "bg-rose-100 text-rose-600", fact: "크릴은 아주 작은 새우처럼 생겼지만, 지구의 많은 바다 동물들에게 소중한 식량이 돼요." },
+                    { name: "푸른바다거북", emoji: "🐢", bg: "bg-emerald-100 text-emerald-600", fact: "푸른바다거북은 넓은 바다를 헤엄치며 해초와 해파리를 먹고 살아요." },
+                    { name: "대왕고래", emoji: "🐋", bg: "bg-indigo-100 text-indigo-600", fact: "대왕고래는 지구상에서 가장 큰 동물이에요! 엄청 커다란 몸집을 가졌답니다." }
+                ],
+                questions: [
+                    { q: "이로하 탐험가가 조사한 동물로, 그물에 걸려 살 수 없게 된 동물은 누구인가요?", hint: "웃는 입모양이 있어요.", answer: "바키타 돌고래" },
+                    { q: "이수 탐험가가 조사한 동물로, 바닷가의 얼음이나 바위에서 헤엄치며, 해양 쓰레기로 인해 살 곳이 위태로워진 동물은 누구인가요?", hint: "동글동글한 귀와 수염이 있어요.", answer: "듀공" },
+                    { q: "래원 탐험가가 조사한 동물로, 지구 온난화로 바다가 따뜻해지며 멸종위기가 된 동물은 누구인가요?", hint: "아주 작은 새우예요.", answer: "크릴" },
+                    { q: "시우 탐험가가 조사한 동물로, 플라스틱을 먹이로 착각하고 먹어서 멸종위기가 된 동물은 누구인가요?", hint: "등껍질이 있어요.", answer: "푸른바다거북" },
+                    { q: "재준 탐험가가 조사한 동물로, 먹이인 크릴이 사라져서 멸종위기가 된 동물은 누구인가요?", hint: "엄청 커요.", answer: "대왕고래" }
+                ]
+            },
+            river: {
+                name: "강과 습지 서식지",
+                icon: "💧",
+                choices: [
+                    { name: "투구새우", emoji: "🦐", bg: "bg-teal-100 text-teal-600", fact: "투구새우는 아주 오래전부터 살아온 살아있는 화석 같은 생물이랍니다." },
+                    { name: "두루미", emoji: "🦢", bg: "bg-sky-100 text-sky-700", fact: "두루미는 머리 위가 붉고 우아한 깃털을 가졌으며, 우리나라의 소중한 천연기념물이에요." },
+                    { name: "아홀로틀", emoji: "🦎", bg: "bg-pink-100 text-pink-600", fact: "멕시코도롱뇽인 아홀로틀은 언제나 웃는 얼굴을 하고 있으며 핑크색 외부 아가미 뿔이 매력적이에요." },
+                    { name: "양쯔강돌고래", emoji: "🐬", bg: "bg-purple-100 text-purple-600", fact: "양쯔강돌고래는 강물 속에서 부드럽게 헤엄치는 소중한 민물 돌고래예요." },
+                    { name: "저어새", emoji: "🦆", bg: "bg-amber-100 text-amber-700", fact: "저어새는 주걱처럼 생긴 독특하고 길쭉한 부리로 물속의 먹이를 찾아요." }
+                ],
+                questions: [
+                    { q: "김준 탐험가가 조사한 동물로, 농약을 먹어서 사라진 동물은 누구인가요?", hint: "투구를 쓴 것처럼 생겼어요.", answer: "투구새우" },
+                    { q: "서연 탐험가가 조사한 동물로, 머리 위가 붉고 전선 때문에 날개를 잃어버릴 뻔한 동물은 누구인가요?", hint: "하얀색 옷을 입고 있어요.", answer: "두루미" },
+                    { q: "유나 탐험가가 조사한 동물로, 새끼를 다른 동물이 잡아먹어서 멸종위기가 된 동물은 누구인가요?", hint: "얼굴에 핑크색 뿔(아가미)이 있어요.", answer: "아홀로틀" },
+                    { q: "기원 탐험가가 조사한 동물로, 바닷물이 오염되어 사라진 동물은 누구인가요?", hint: "몸이 회색이다.", answer: "양쯔강돌고래" },
+                    { q: "현수 탐험가가 조사한 동물로, 살아갈 곳이 오염되어 사라진 동물은 누구인가요?", hint: "부리가 주걱처럼 길쭉해요.", answer: "저어새" }
+                ]
+            },
+            forest: {
+                name: "숲 서식지",
+                icon: "🌳",
+                choices: [
+                    { name: "벵골호랑이", emoji: "🐅", bg: "bg-orange-100 text-orange-600", fact: "벵골호랑이는 멋진 주황색 바탕에 검은색 줄무늬가 선명한 숲속의 용감한 맹수예요." },
+                    { name: "아무르표범", emoji: "🐆", bg: "bg-amber-100 text-amber-600", fact: "아무르표범은 추운 숲속에 살며 촘촘하고 아름다운 장미 모양 점무늬 코트를 입고 있어요." },
+                    { name: "반달가슴곰", emoji: "🐻", bg: "bg-yellow-900/20 text-yellow-900", fact: "반달가슴곰은 가슴에 노란색 반달 무늬가 있는 귀여운 우리나라 숲의 친구예요." },
+                    { name: "아시아코끼리", emoji: "🐘", bg: "bg-slate-200 text-slate-700", fact: "아시아코끼리는 숲속에서 커다란 귀와 긴 코로 친구들과 장난쳐요." },
+                    { name: "레서판다", emoji: "🦊", bg: "bg-red-100 text-red-600", fact: "레서판다는 붉은 털과 긴 줄무늬 꼬리를 가진 아주 귀여운 나무 타기 대장이에요." }
+                ],
+                questions: [
+                    { q: "지호 탐험가가 조사한 동물로, 사냥꾼들이 사냥해서 멸종위기가 된 동물은 누구인가요?", hint: "주황색에 줄무늬가 있다.", answer: "벵골호랑이" },
+                    { q: "다봄 탐험가가 조사한 동물로, 아름다운 가죽을 얻기 위해 사냥을 해서 사라진 동물은 누구인가요?", hint: "장미 모양 점 무늬가 있다.", answer: "아무르표범" },
+                    { q: "제니 탐험가가 조사한 동물로, 산불 때문에 멸종위기가 된 동물은 누구인가요?", hint: "가슴에 반달 모양 무늬가 있다.", answer: "반달가슴곰" },
+                    { q: "강현 탐험가가 조사한 동물로, 사람들이 나무를 베어 쉼터가 없어지고, 땅이 없어져서 멸종위기가 된 동물은 누구인가요?", hint: "상아가 없는 코끼리.", answer: "아시아코끼리" },
+                    { q: "동하 탐험가가 조사한 동물로, 먹이인 대나무가 줄어들어서 멸종위기가 된 동물은 누구인가요?", hint: "너구리를 닮은 판다.", answer: "레서판다" }
+                ]
+            },
+            desert: {
+                name: "사막 서식지",
+                icon: "🏜️",
+                choices: [
+                    { name: "쌍봉낙타", emoji: "🐫", bg: "bg-amber-100 text-amber-700", fact: "쌍봉낙타는 모래바람 속에서도 등에 두 개의 커다란 혹을 가지고 튼튼하게 버텨요." },
+                    { name: "아프리카들개", emoji: "🐕", bg: "bg-orange-100 text-orange-700", fact: "아프리카들개는 넓은 초원과 사막 주변에서 무리지어 신나게 달려요." },
+                    { name: "사막여우", emoji: "🦊", bg: "bg-yellow-100 text-amber-600", fact: "사막여우는 커다란 귀로 사막의 작은 소리도 척척 들을 수 있어요." },
+                    { name: "아닥스", emoji: "🐐", bg: "bg-amber-200/50 text-amber-800", fact: "아닥스는 멋지고 길쭉한 빙글빙글 뿔을 가진 사막의 멋쟁이 영양이에요." },
+                    { name: "치타", emoji: "🐆", bg: "bg-yellow-200 text-yellow-800", fact: "치타는 눈물 자국 같은 검은 선이 있고, 세상에서 가장 빨리 달릴 수 있는 멋진 달리기 선수예요." }
+                ],
+                questions: [
+                    { q: "다은 탐험가가 조사한 동물로, 사람들이 사막을 도로로 만들어서 멸종위기가 된 동물은 누구인가요?", hint: "혹이 2개예요.", answer: "쌍봉낙타" },
+                    { q: "도현 탐험가가 조사한 동물로, 사람들의 집을 넓히면서 살곳을 잃어서 멸종위기가 된 동물은 누구인가요?", hint: "아프리카에 산다.", answer: "아프리카들개" },
+                    { q: "혜솔 탐험가가 조사한 동물로, 복스러운 털로 가방을 만들려고 사냥을 해서 멸종위기가 된 동물은 누구인가요?", hint: "귀가 엄청 크다.", answer: "사막여우" },
+                    { q: "도윤 탐험가가 조사한 동물로, 가뭄으로 먹을 풀이 부족해서 멸종위기가 된 동물은 누구인가요?", hint: "뿔이 빙글빙글하고 길다.", answer: "아닥스" },
+                    { q: "다원 탐험가가 조사한 동물로, 가죽이나 새끼를 얻기 위해 사냥을 해서 멸종위기가 된 동물은 누구인가요?", hint: "세상에서 가장 빠른 동물이에요.", answer: "치타" }
+                ]
+            }
+        };
+
+        let currentHabitatKey = null;
+        let currentQuestionIndex = 0;
+        let collectedStickers = JSON.parse(localStorage.getItem('savedStickers')) || [];
+        let currentCorrectChoice = null;
+
+        updateStickerCount();
+
+        function startHabitat(habitatKey) {
+            playSound('click');
+            currentHabitatKey = habitatKey;
+            currentQuestionIndex = 0;
+
+            document.getElementById('habitat-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            document.getElementById('success-screen').classList.add('hidden');
+            document.getElementById('completion-screen').classList.add('hidden');
+            
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            const habitat = quizData[currentHabitatKey];
+            const qData = habitat.questions[currentQuestionIndex];
+
+            document.getElementById('quiz-progress').innerText = `문제 ${currentQuestionIndex + 1} / 5`;
+            document.getElementById('question-text').innerText = qData.q;
+            document.getElementById('hint-text').innerText = qData.hint;
+            
+            // Hide hint container
+            hintVisible = false;
+            document.getElementById('hint-container').classList.add('hidden');
+            document.getElementById('hint-toggle-btn').innerText = "💡 힌트 보기";
+            document.getElementById('hint-toggle-btn').className = "bg-amber-100 hover:bg-amber-200 text-amber-800 px-4 py-2 rounded-2xl text-base font-bold transition inline-flex items-center gap-2 shadow-sm cursor-pointer";
+
+            // Hide feedback box
+            document.getElementById('feedback-box').classList.add('hidden');
+
+            // Render choices with optimized responsive padding and text sizing
+            const grid = document.getElementById('choices-grid');
+            grid.innerHTML = '';
+
+            habitat.choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = `animal-card ${choice.bg} p-2 md:p-3 rounded-3xl shadow-md border-2 border-white flex flex-col items-center justify-center gap-1.5 transition transform hover:scale-103 cursor-pointer min-h-[135px]`;
+
+                btn.innerHTML = `
+                    <span class="text-4xl md:text-5xl">${choice.emoji}</span>
+                    <span class="text-xs md:text-base font-bold leading-tight px-1 break-keep text-center">${choice.name}</span>
+                `;
+                btn.onclick = () => checkAnswer(choice.name, qData.answer);
+                grid.appendChild(btn);
+            });
+
+            // Automatically read question aloud for toddlers when question loads (if enabled)
+            setTimeout(() => {
+                readCurrentQuestion();
+            }, 300);
+        }
+
+        function checkAnswer(selectedName, correctName) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            const feedbackBox = document.getElementById('feedback-box');
+            
+            if (selectedName === correctName) {
+                playSound('success');
+                const habitat = quizData[currentHabitatKey];
+                currentCorrectChoice = habitat.choices.find(c => c.name === correctName);
+                
+                if (currentCorrectChoice && !collectedStickers.some(s => s.name === currentCorrectChoice.name)) {
+                    collectedStickers.push(currentCorrectChoice);
+                    localStorage.setItem('savedStickers', JSON.stringify(collectedStickers));
+                    updateStickerCount();
+                }
+
+                confetti({
+                    particleCount: 100,
+                    spread: 80,
+                    origin: { y: 0.6 }
+                });
+
+                document.getElementById('quiz-screen').classList.add('hidden');
+                showSuccessScreen(currentCorrectChoice);
+
+            } else {
+                playSound('wrong');
+                const wrongMsg = "앗, 아니에요! 다른 친구를 찾아볼까요? 🤔";
+                feedbackBox.className = "mt-4 p-4 rounded-2xl text-2xl font-bold bg-rose-100 text-rose-700 border-2 border-rose-300 animate-bounce";
+                feedbackBox.innerText = wrongMsg;
+                feedbackBox.classList.remove('hidden');
+
+                if (soundEnabled && 'speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance("앗 아니에요. 다시 찾아보세요.");
+                    utterance.lang = 'ko-KR';
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+        }
+
+        function showSuccessScreen(matchedChoice) {
+            const correctName = matchedChoice ? matchedChoice.name : '';
+            const successText = `정답이에요! 구조대 ${correctName} 구조 완료!`;
+            document.getElementById('success-heading').innerText = successText;
+            
+            const imgContainer = document.getElementById('success-img-container');
+            imgContainer.className = `w-28 h-28 mb-3 rounded-2xl overflow-hidden shadow-md ${matchedChoice ? matchedChoice.bg : 'bg-sky-100'} flex items-center justify-center shrink-0 p-2`;
+            imgContainer.innerHTML = `<span class="text-6xl">${matchedChoice ? matchedChoice.emoji : '🐾'}</span>`;
+            
+            document.getElementById('success-animal-name').innerText = matchedChoice ? matchedChoice.name : '';
+            document.getElementById('success-fact').innerText = matchedChoice ? matchedChoice.fact : '';
+
+            document.getElementById('success-screen').classList.remove('hidden');
+
+            if (soundEnabled && 'speechSynthesis' in window) {
+                const speechText = `참 잘했어요! ${correctName}. ${matchedChoice ? matchedChoice.fact : ''}`;
+                const utterance = new SpeechSynthesisUtterance(speechText);
+                utterance.lang = 'ko-KR';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function proceedToNextQuestion() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            playSound('click');
+            document.getElementById('success-screen').classList.add('hidden');
+            
+            currentQuestionIndex++;
+            if (currentQuestionIndex < 5) {
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                loadQuestion();
+            } else {
+                showCompletion();
+            }
+        }
+
+        function showCompletion() {
+            playSound('success');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('success-screen').classList.add('hidden');
+            document.getElementById('completion-screen').classList.remove('hidden');
+            document.getElementById('main-title').innerText = "🏆 구조 작전 완료!";
+            document.getElementById('sub-title').innerText = "모든 동물이 안전해졌어요!";
+            
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.4 }
+            });
+
+            if (soundEnabled && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance("축하합니다! 모든 동물 친구들을 안전하게 구조했어요!");
+                utterance.lang = 'ko-KR';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function goToHome() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            playSound('click');
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('success-screen').classList.add('hidden');
+            document.getElementById('completion-screen').classList.add('hidden');
+            document.getElementById('habitat-screen').classList.remove('hidden');
+            document.getElementById('main-title').innerText = "어떤 서식지로 출발할까요?";
+            document.getElementById('sub-title').innerText = "탐험하고 싶은 서식지를 골라주세요!";
+        }
+
+        function updateStickerCount() {
+            document.getElementById('sticker-count').innerText = collectedStickers.length;
+        }
+
+        function openStickerBook() {
+            playSound('click');
+            const grid = document.getElementById('sticker-grid');
+            grid.innerHTML = '';
+
+            const allAnimals = [];
+            Object.keys(quizData).forEach(k => {
+                quizData[k].choices.forEach(c => {
+                    if (!allAnimals.some(existing => existing.name === c.name)) {
+                        allAnimals.push(c);
+                    }
+                });
+            });
+
+            allAnimals.forEach(animal => {
+                const isCollected = collectedStickers.some(s => s.name === animal.name);
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-3xl border-2 flex flex-col items-center justify-center gap-2 ${isCollected ? 'bg-amber-50 border-amber-200 shadow-md' : 'bg-gray-100 border-dashed border-gray-300 opacity-60'}`;
+                
+                if (isCollected) {
+                    item.innerHTML = `
+                        <span class="text-5xl">${animal.emoji}</span>
+                        <span class="font-bold text-gray-800 text-base">${animal.name}</span>
+                        <span class="bg-amber-200 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">획득 완료 ⭐</span>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <span class="text-5xl">❓</span>
+                        <span class="font-bold text-gray-400 text-base">???</span>
+                        <span class="bg-gray-200 text-gray-500 text-xs px-2.5 py-1 rounded-full">미획득</span>
+                    `;
+                }
+                grid.appendChild(item);
+            });
+
+            document.getElementById('sticker-modal').classList.remove('hidden');
+        }
+
+        function closeStickerBook() {
+            playSound('click');
+            document.getElementById('sticker-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
